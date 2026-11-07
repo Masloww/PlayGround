@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0509">
+<meta name="description" content="El Laberinto de Sangre: un roguelite de arena inspirado en el inframundo griego. Sobrevive a las oleadas y derrota a Asterión, el Toro del Laberinto.">
+<title>El Laberinto de Sangre — Combate con Asterión</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b0509'/%3E%3Cpath d='M18 40c0-8 6-14 14-14s14 6 14 14' fill='none' stroke='%23e8b96b' stroke-width='4'/%3E%3Cpath d='M22 22c-4-6-2-11 3-12M42 22c4-6 2-11-3-12' fill='none' stroke='%23efe4cf' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='26' cy='34' r='2.4' fill='%23ff4961'/%3E%3Ccircle cx='38' cy='34' r='2.4' fill='%23ff4961'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Arena de combate"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hidden" aria-live="polite">
+    <div class="boss-hud" id="boss-hud">
+      <div class="boss-hud-head">
+        <span class="boss-title">ASTERIÓN</span>
+        <span class="boss-sub">EL TORO DEL LABERINTO</span>
+        <span class="boss-phase" id="boss-phase">FASE I</span>
+      </div>
+      <div class="boss-bar-frame">
+        <div class="boss-bar-track">
+          <div class="boss-bar-fill" id="boss-fill"></div>
+          <div class="boss-bar-frost" id="boss-frost"></div>
+          <span class="boss-mark" style="left:60%"></span>
+          <span class="boss-mark" style="left:30%"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <button id="mute-btn" class="icon-btn" aria-label="Silenciar sonido" title="Sonido (M)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M16 8.5c1.2 1 2 2.2 2 3.5s-.8 2.5-2 3.5"/><path class="wave" d="M18.6 5.6c1.9 1.6 3.1 3.8 3.1 6.4s-1.2 4.8-3.1 6.4"/></svg>
+      </button>
+      <button id="pause-btn" class="icon-btn" aria-label="Pausa" title="Pausa (Esc)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+      </button>
+    </div>
+
+    <div class="wave-chip" id="wave-chip">OLEADA I</div>
+
+    <div class="player-hud">
+      <div class="portrait" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#170b13" stroke="#8a6738"/><path d="M16 46c2-12 8-18 16-18s14 6 16 18" fill="#3a1522"/><circle cx="32" cy="24" r="9" fill="#e8c9b0"/><path d="M23 21c0-6 4-9 9-9s9 3 9 9c-3-3-5-4-9-4s-6 1-9 4z" fill="#201016"/><path d="M22 17c2-6 6-9 10-9s8 3 10 9" fill="none" stroke="#63e6c4" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="player-bars">
+        <div class="hp-bar">
+          <div class="hp-fill" id="hp-fill"></div>
+          <div class="hp-ghost" id="hp-ghost"></div>
+          <span class="hp-label" id="hp-text">100 / 100</span>
+        </div>
+        <div class="abilities">
+          <div class="ability" id="dash-ability">
+            <span class="ability-icon dash-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            </span>
+            <span class="ability-meta"><span class="ability-name">ESQUIVA</span><span class="pips" id="dash-pips"></span></span>
+          </div>
+          <div class="ability" id="special-ability">
+            <span class="ability-icon special-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2c1.6 4.2 6 6.2 6 11a6 6 0 1 1-12 0c0-2.1.9-3.7 2-5 .2 2 1.1 3.1 2.2 3.6-.4-3.7.8-6.9 1.8-9.6z"/></svg>
+            </span>
+            <span class="ability-meta"><span class="ability-name">SANGRE DE ESTIGIA</span><span class="cd-overlay" id="special-cd"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="boon-list" id="boon-list"></div>
+    <div class="toast" id="toast"></div>
+    <div class="banner" id="banner"><span class="banner-sub" id="banner-sub"></span><span class="banner-main" id="banner-main"></span></div>
+    <div class="hint" id="control-hint">WASD mover · J atacar · ESPACIO esquivar · K sangre</div>
+  </div>
+
+  <!-- ===================== TITLE ===================== -->
+  <div id="title-screen" class="overlay title-screen">
+    <div class="title-inner">
+      <p class="eyebrow">Un descenso al inframundo</p>
+      <h1 class="game-logo">
+        <span class="logo-small">El Laberinto</span>
+        <span class="logo-big">de Sangre</span>
+      </h1>
+      <p class="tagline">Escapa del Tártaro. Detén a Asterión.<br><em>La muerte es solo el principio.</em></p>
+      <div class="mode-buttons">
+        <button class="btn mode-btn primary" id="btn-run">
+          <span class="btn-kicker">Primera huida</span>
+          <span class="btn-title">Comenzar huida</span>
+          <span class="btn-sub">Dos oleadas y, al final, el toro</span>
+        </button>
+        <button class="btn mode-btn danger" id="btn-boss">
+          <span class="btn-kicker">Modo directo</span>
+          <span class="btn-title">Desafío del jefe</span>
+          <span class="btn-sub">Directo a Asterión · sin piedad</span>
+        </button>
+      </div>
+      <div class="controls-hint desktop-hint">
+        <span><kbd>WASD</kbd> mover</span>
+        <span><kbd>J</kbd> / clic atacar</span>
+        <span><kbd>Espacio</kbd> esquivar</span>
+        <span><kbd>K</kbd> / clic der. sangre</span>
+        <span><kbd>Esc</kbd> pausa</span>
+      </div>
+      <div class="controls-hint touch-hint">
+        <span>Joystick para moverte</span>
+        <span>Botones para atacar, esquivar y lanzar sangre</span>
+      </div>
+      <p class="title-note">El jefe tiene tres fases. Aprende sus señales. Esquiva <em>a través</em> de las ondas.</p>
+    </div>
+    <div class="title-footer"><span>Inspirado en los mitos del inframundo griego</span></div>
+  </div>
+
+  <!-- ===================== BOONS ===================== -->
+  <div id="boon-screen" class="overlay boon-screen hidden">
+    <div class="panel boon-panel">
+      <p class="eyebrow" id="boon-eyebrow">El Olimpo te observa</p>
+      <h2 id="boon-title">Elige una bendición</h2>
+      <p class="panel-sub" id="boon-sub">Solo una. El laberinto no perdona la duda.</p>
+      <div class="boon-cards" id="boon-cards"></div>
+      <p class="boon-hint">Haz clic en una carta o pulsa <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></p>
+    </div>
+  </div>
+
+  <!-- ===================== BOSS INTRO ===================== -->
+  <div id="boss-intro" class="boss-intro hidden">
+    <div class="intro-line"></div>
+    <p class="intro-kicker">Celda final del laberinto</p>
+    <h2 class="intro-name">ASTERIÓN</h2>
+    <p class="intro-epithet">El Toro del Laberinto</p>
+    <p class="intro-quote">«La sangre no te abrirá esta puerta, príncipe.»</p>
+    <div class="intro-line"></div>
+  </div>
+
+  <!-- ===================== PAUSE ===================== -->
+  <div id="pause-screen" class="overlay pause-screen hidden">
+    <div class="panel small-panel">
+      <p class="eyebrow">El tiempo se detiene</p>
+      <h2>Pausa</h2>
+      <div class="pause-actions">
+        <button class="btn wide" id="btn-resume">Continuar</button>
+        <button class="btn wide ghost" id="btn-restart">Reiniciar huida</button>
+        <button class="btn wide ghost" id="btn-title">Volver al título</button>
+      </div>
+      <div class="pause-toggles">
+        <button class="toggle" id="btn-sound">Sonido: <strong>activado</strong></button>
+        <button class="toggle" id="btn-shake">Sacudida: <strong>activada</strong></button>
+      </div>
+      <p class="pause-hint"><kbd>Esc</kbd> para continuar</p>
+    </div>
+  </div>
+
+  <!-- ===================== END ===================== -->
+  <div id="end-screen" class="overlay end-screen hidden">
+    <div class="panel end-panel">
+      <p class="eyebrow" id="end-eyebrow">El laberinto reclama otro nombre</p>
+      <h2 id="end-title">Has caído</h2>
+      <p class="panel-sub" id="end-text">Pero la sangre recuerda. Vuelve a levantarte.</p>
+      <div class="end-stats">
+        <div><span id="stat-time">0:00</span><label>Tiempo</label></div>
+        <div><span id="stat-damage">0</span><label>Daño infligido</label></div>
+        <div><span id="stat-phase">—</span><label>Fase del jefe</label></div>
+      </div>
+      <div class="end-actions">
+        <button class="btn primary wide" id="btn-again">Volver a intentarlo</button>
+        <button class="btn wide ghost" id="btn-end-title">Volver al título</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TOUCH CONTROLS ===================== -->
+  <div class="touch-controls" id="touch-controls">
+    <div class="joystick" id="joystick">
+      <div class="joystick-ring"></div>
+      <div class="joystick-knob" id="joystick-knob"></div>
+    </div>
+    <div class="touch-buttons">
+      <button class="touch-btn special" data-action="special" aria-label="Lanzar sangre">
+        <svg viewBox="0 0 24 24"><path d="M12 2c1.6 4.2 6 6.2 6 11a6 6 0 1 1-12 0c0-2.1.9-3.7 2-5 .2 2 1.1 3.1 2.2 3.6-.4-3.7.8-6.9 1.8-9.6z"/></svg>
+      </button>
+      <button class="touch-btn dash" data-action="dash" aria-label="Esquivar">
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+      </button>
+      <button class="touch-btn attack" data-action="attack" aria-label="Atacar">
+        <svg viewBox="0 0 24 24"><path d="M4 17 16.5 4.5M14 3l7 7-2.5 2.5-7-7zM4 17l1 3 3-1"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
