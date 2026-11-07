@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#10131e" />
+  <link rel="icon" href="data:," />
+  <title>Último amanecer — Supervivencia arcana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Último amanecer, inicio"><span class="brand-mark">✦</span><span>ÚLTIMO<br><b>AMANECER</b></span></a>
+      <div class="top-center"><span class="eyebrow">SUPERVIVENCIA ARCANA</span><span class="seed">● &nbsp; BOSQUE UMBRÍO</span></div>
+      <button id="soundBtn" class="icon-btn" aria-label="Activar o desactivar sonido" title="Sonido">♫</button>
+    </header>
+
+    <section class="game-layout">
+      <aside class="side-panel left-panel">
+        <div class="panel-kicker">EL VIAJE</div>
+        <div class="stat-block"><span class="stat-icon gold">✦</span><div><small>ORO REUNIDO</small><strong id="bankGold">000</strong></div></div>
+        <div class="divider"></div>
+        <div class="side-copy"><span class="mini-label">OBJETIVO</span><p>Sobrevive a la noche.<br>El amanecer está cerca.</p></div>
+        <div class="best-run"><span class="mini-label">RÉCORD PERSONAL</span><strong id="bestTime">00:00</strong><span class="record-caption">Tu leyenda comienza aquí</span></div>
+        <div class="sigil-art" aria-hidden="true"><span>✧</span><i>✦</i><b>✧</b></div>
+      </aside>
+
+      <section class="arena-wrap" aria-label="Campo de juego">
+        <div class="arena-top"><span class="map-name"><i class="map-dot"></i> BOSQUE UMBRÍO</span><span class="run-tag" id="runTag">NOCHE 01 &nbsp;·&nbsp; DIFICULTAD I</span></div>
+        <div class="arena" id="arena">
+          <canvas id="gameCanvas" aria-label="Juego de supervivencia"></canvas>
+          <div class="arena-vignette"></div>
+          <div class="start-screen" id="startScreen">
+            <div class="moon moon-large"></div>
+            <span class="pretitle"><i></i> LA NOCHE NO PERDONA <i></i></span>
+            <h1>¿CUÁNTO<br><em>RESISTIRÁS?</em></h1>
+            <p>Las sombras despiertan. Cada minuto te hace más fuerte.<br>Solo tienes que seguir en movimiento.</p>
+            <button id="playBtn" class="primary-btn"><span>COMENZAR PARTIDA</span><b>→</b></button>
+            <div class="controls-hint"><span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span><span class="hint-text">MOVERSE</span><span class="hint-sep">·</span><span class="hint-text">ATAQUE AUTOMÁTICO</span></div>
+          </div>
+          <div class="hud" id="hud" aria-live="polite">
+            <div class="hud-topline"><div class="timer-box"><span class="tiny-label">SUPERVIVE</span><strong id="timer">00:00</strong></div><div class="wave-box"><span class="wave-symbol">☽</span><span><small>OLEADA</small><b id="wave">01</b></span></div><button id="pauseBtn" class="pause-btn" aria-label="Pausar">Ⅱ</button></div>
+            <div class="health-wrap"><div class="health-meta"><span>♥ <b>VITALIDAD</b></span><span id="healthText">100 / 100</span></div><div class="bar health-bar"><i id="healthFill"></i></div></div>
+            <div class="xp-wrap"><div class="xp-meta"><span>NIVEL <b id="level">01</b></span><span id="xpText">0 / 12 XP</span></div><div class="bar xp-bar"><i id="xpFill"></i></div></div>
+            <div class="kill-counter"><span class="skull">✹</span><span><b id="kills">0</b><small>ELIMINADOS</small></span></div>
+            <div class="weapon-slots" id="weaponSlots"><div class="weapon-slot active-slot">✦<small>1</small></div><div class="weapon-slot empty-slot">＋</div><div class="weapon-slot empty-slot">＋</div></div>
+          </div>
+          <div id="levelOverlay" class="overlay level-overlay" aria-hidden="true"><div class="modal-card upgrade-modal"><span class="modal-eyebrow">✦ &nbsp; NUEVO PODER &nbsp; ✦</span><h2>ELIGE TU<br><em>DESTINO</em></h2><p>Una decisión puede cambiarlo todo.</p><div id="upgradeChoices" class="upgrade-choices"></div></div></div>
+          <div id="pauseOverlay" class="overlay" aria-hidden="true"><div class="modal-card small-modal"><span class="modal-eyebrow">LA NOCHE ESPERA</span><h2>PAUSA</h2><p>Respira. Las sombras no se irán.</p><button id="resumeBtn" class="primary-btn"><span>SEGUIR JUGANDO</span><b>→</b></button></div></div>
+          <div id="endOverlay" class="overlay" aria-hidden="true"><div class="modal-card small-modal"><span class="modal-eyebrow" id="endEyebrow">EL BOSQUE TE RECUERDA</span><h2 id="endTitle">LA NOCHE<br><em>TERMINA</em></h2><p id="endText">Cada final es el comienzo de otra leyenda.</p><div class="run-results"><span><small>TIEMPO</small><b id="resultTime">00:00</b></span><span><small>ELIMINADOS</small><b id="resultKills">0</b></span><span><small>ORO</small><b id="resultGold">0</b></span></div><button id="againBtn" class="primary-btn"><span>VOLVER A INTENTAR</span><b>↻</b></button></div></div>
+          <div class="touch-controls" id="touchControls"><div class="joystick" id="joystick"><div class="joy-ring"></div><div class="joy-knob" id="joyKnob"></div></div><div class="touch-tip">MANTÉN Y MUEVE</div></div>
+          <div class="toast" id="toast"></div>
+        </div>
+        <div class="arena-footer"><span><i class="pulse-dot"></i> <b id="statusText">LISTO PARA ENTRAR</b></span><span>UN MUNDO DE SOMBRAS &nbsp; <b>✦</b></span></div>
+      </section>
+
+      <aside class="side-panel right-panel">
+        <div class="panel-kicker">TU CAZADORA</div>
+        <div class="character-card"><div class="portrait-frame"><div class="portrait-halo"></div><div class="portrait">♙</div><span class="portrait-star">✦</span></div><div class="character-name">ARIA<br><em>LA ERRANTE</em></div><div class="character-sub">PORTADORA DEL FUEGO AZUL</div><div class="character-rule"></div><div class="trait"><span class="trait-icon">✧</span><p><b>RASGO INNATO</b><br>Un destello de fuego<br>cada 7 segundos.</p></div></div>
+        <div class="side-bottom"><span class="mini-label">CONTROLES</span><div class="control-row"><span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span><small>MOVER</small></div><div class="control-row"><span class="keycap wide">ESC</span><small>PAUSAR</small></div><p class="mobile-note">En móvil, mueve con el joystick.</p></div>
+      </aside>
+    </section>
+    <footer class="page-footer"><span>UN JUEGO SOBRE RESISTIR. Y VOLVER A INTENTAR.</span><span>HECHO PARA LAS NOCHES LARGAS <b>✦</b></span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
